@@ -5,5 +5,10 @@ edition = "2021"
 
 [dependencies]
 maud = { version = "0.26.0", features = ["axum"] }
-axum = "0.7.5"
+axum = { version = "0.7.5", features = ["tower-log"] }
 tokio = { version = "1.40.0", features = ["full"] }
+sqlx = { version = "0.8.2", features = ["postgres", "runtime-tokio-native-tls", "time"] }
+dotenv = "0.15.0"
+serde = { version = "1.0.210", features = ["derive"] }
+clap = "4.5.18"
+time = "0.3.36"
