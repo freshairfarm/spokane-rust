@@ -1,2 +1,2 @@
 -- Add down migration script here
-DROP TABLE IF EXISTS Meetups;
+DROP TABLE IF EXISTS meetups;

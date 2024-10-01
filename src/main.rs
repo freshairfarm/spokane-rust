@@ -1,13 +1,15 @@
-use std::net::SocketAddrV4;
-use axum::{routing::get, Router};
+use std::{net::SocketAddrV4, sync::Arc};
+use axum::{routing::{delete, get, post, put}, Router};
 use maud::{html, Markup, DOCTYPE};
 use sqlx::postgres::{PgPoolOptions, PgPool};
 use dotenv;
 
 mod models;
+mod handlers;
+mod schemas;
 
 #[derive(Clone)]
-struct AppState {
+pub struct AppState {
     db: PgPool,
 }
 
@@ -23,15 +25,22 @@ async fn main() -> Result<(), String> {
         .map_err(|e| format!("Failed to bind to socket. Error: {}", e.to_string()))?;
 
     let db_connection_string = dotenv::var("DATABASE_URL").unwrap();
-    let db = PgPoolOptions::new()
+    let db = match PgPoolOptions::new()
         .max_connections(50)
         .connect(&db_connection_string)
-        .await
-        .unwrap();
+        .await {
+            Ok(pool) => pool,
+            Err(e) => panic!("Failed to connect to the database: {}", e),
+        };
 
     let app = Router::new()
         .route("/", get(hello_world))
-        .with_state(AppState { db });
+        .route("/api/meetups", get(handlers::get_meetup_list))
+        .route("/api/meetups/:id", get(handlers::get_meetup))
+        .route("/api/meetups", post(handlers::create_meetup))
+        .route("/api/meetups/:id", put(handlers::put_meetup))
+        .route("/api/meetups/:id", delete(handlers::delete_meetup))
+        .with_state(Arc::new(AppState { db: db.clone() }));
 
     println!("Listening on http://{}", listener.local_addr().unwrap());
 
