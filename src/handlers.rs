@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use axum::{body, extract::{Path, Query, State}, http::StatusCode, Json};
-use axum_macros::debug_handler;
+use axum::{extract::{Path, Query, State}, http::StatusCode, Json};
 use serde_json::json;
 
 use crate::{AppState, models::*, schemas::*};
