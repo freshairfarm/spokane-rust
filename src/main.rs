@@ -2,9 +2,7 @@ use std::{net::SocketAddrV4, path::PathBuf, sync::Arc};
 use axum::{routing::{delete, get, post, put}, Router};
 use maud::{html, Markup, DOCTYPE};
 use sqlx::postgres::{PgPoolOptions, PgPool};
-use copy_to_output::copy_to_output;
 use tower_http::services::ServeDir;
-use std::env;
 
 mod models;
 mod handlers;
@@ -17,9 +15,10 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
-    copy_to_output("src/raw", "debug").unwrap();
-
     dotenv::dotenv().unwrap();
+
+    let static_dir = PathBuf::from(dotenv::var("STATIC_DIR").unwrap());
+    println!("Serving static assets from: {:?}", std::fs::canonicalize(&static_dir).unwrap_or("Failed to locate static file directory".into()));
 
     let socket_addr = dotenv::var("SOCKET_ADDR").unwrap();
     let socket_addr = socket_addr.parse::<SocketAddrV4>().map_err(|e| format!("Failed to parse socket address {}", e))?;
@@ -44,7 +43,7 @@ async fn main() -> Result<(), String> {
         .route("/api/meetups", post(handlers::create_meetup))
         .route("/api/meetups/:id", put(handlers::put_meetup))
         .route("/api/meetups/:id", delete(handlers::delete_meetup))
-        .nest_service("/static", ServeDir::new(".\\raw"))
+        .nest_service("/static", ServeDir::new(static_dir))
         .with_state(Arc::new(AppState { db: db.clone() }));
 
     println!("Listening on http://{}", listener.local_addr().unwrap());
