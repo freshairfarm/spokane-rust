@@ -14,3 +14,6 @@ clap = "4.5.18"
 time = "0.3.36"
 serde_json = "1.0.128"
 axum-macros = "0.4.2"
+copy_to_output = "2.2.0"
+tower-http = { version = "0.6.1", features = ["fs", "trace"] }
+tower = { version = "0.5.1", features = ["util"] }

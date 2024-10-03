@@ -1,7 +1,10 @@
-use std::{net::SocketAddrV4, sync::Arc};
+use std::{net::SocketAddrV4, path::PathBuf, sync::Arc};
 use axum::{routing::{delete, get, post, put}, Router};
 use maud::{html, Markup, DOCTYPE};
 use sqlx::postgres::{PgPoolOptions, PgPool};
+use copy_to_output::copy_to_output;
+use tower_http::services::ServeDir;
+use std::env;
 
 mod models;
 mod handlers;
@@ -14,6 +17,8 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
+    copy_to_output("src/raw", "debug").unwrap();
+
     dotenv::dotenv().unwrap();
 
     let socket_addr = dotenv::var("SOCKET_ADDR").unwrap();
@@ -39,6 +44,7 @@ async fn main() -> Result<(), String> {
         .route("/api/meetups", post(handlers::create_meetup))
         .route("/api/meetups/:id", put(handlers::put_meetup))
         .route("/api/meetups/:id", delete(handlers::delete_meetup))
+        .nest_service("/static", ServeDir::new(".\\raw"))
         .with_state(Arc::new(AppState { db: db.clone() }));
 
     println!("Listening on http://{}", listener.local_addr().unwrap());
@@ -50,82 +56,55 @@ async fn main() -> Result<(), String> {
     Ok(())
 }
 
+fn head(title: String) -> Markup {
+    html! {
+        head {
+            meta charset="utf-8";
+            title { (title) }
+            link href="https://cdn.jsdelivr.net/npm/beercss@3.7.10/dist/cdn/beer.min.css" rel="stylesheet";
+            link rel="preconnect" href="https://fonts.googleapis.com";
+            link rel="preconnect" href="https://fonts.gstatic.com" crossorigin;
+            link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet";
+            link href="/static/style.css" rel="stylesheet";
+            script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.7.10/dist/cdn/beer.min.js"{}
+            script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"{}
+        }
+    }
+}
+
 async fn hello_world() -> Markup {
     html! {
         (DOCTYPE)
         html {
-            head {
-                meta charset="utf-8";
-                title { "Hello, world!" }
-                link href="https://cdn.jsdelivr.net/npm/beercss@3.7.10/dist/cdn/beer.min.css" rel="stylesheet";
-                script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.7.10/dist/cdn/beer.min.js"{}
-                script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"{}
-            }
-            body."dark" {
-                nav."left drawer l" {
+            (head("Hello, world!".into()))
+            body {
+                nav."drawer" {
                     header {
                         nav {
-                            img."circle" src="https://rustacean.net/assets/cuddlyferris.png";
-                            h6 { "Rust, Powered by Beer CSS!" }
+                            img."circle" src="https://s3-dev-usw2-spokanerust-static-objects.s3.us-west-2.amazonaws.com/cuddlyferris__1_-removebg-preview.png" alt="Ferris the Crab";
+                            h6."alfa-slab-one-regular" { "Spokane Rust" }
                         }
                     }
                     a {
                         i { "home" }
-                        div { "Home" }
+                        span."max" { "Home" }
+                    }
+                    a { 
+                        i { "event" }
+                        span { "All Events" }
                     }
                     a {
-                        i { "search" }
-                        div { "Search" }
+                        i { "info" }
+                        span { "About" }
                     }
-                    div."divider";
-                    label { "Label" }
                     a {
-                        i { "widgets" }
-                        div { "Widgets" }
+                        i { "menu_book" }
+                        span { "Code of Conduct" }
                     }
                     a {
                         i { "help" }
-                        div { "Help" }
+                        span { "Learning Resources" }
                     }
-                }
-
-                nav."left m" {
-                    header {
-                        img."circle" src="https://www.beercss.com/favicon.png";
-                    }
-                    a {
-                        i { "home" }
-                        div { "Home" }
-                    }
-                    a {
-                        i { "search" }
-                        div { "Search" }
-                    }
-                    a {
-                        i { "widgets" }
-                        div { "Widgets" }
-                    }
-                }
-
-                nav."bottom s" {
-                    a {
-                        i { "home" }
-                        div { "Home" }
-                    }
-                    a {
-                        i { "search" }
-                        div { "Search" }
-                    }
-                    a {
-                        i { "widgets" }
-                        div { "Widgets" }
-                    }
-                }
-
-                main."responsive" {
-                    img."responsive round" src="https://www.beercss.com/beer-and-woman.svg";
-                    h3 { "Welcome!" }
-                    h5 { "Rust serves beer here!" }
                 }
             }
         }
