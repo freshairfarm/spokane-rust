@@ -4,7 +4,7 @@ use crate::models::Meetup;
 
 /// Represents the options that can be used to filter a list of items.
 #[derive(Debug, Deserialize, Default)]
-pub struct FilterOptions {
+pub struct PaginationOptions {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
 }

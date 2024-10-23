@@ -1,3 +1,6 @@
+use sqlx::prelude::*;
+
+#[derive(FromRow)]
 pub struct Meetup {
     pub meetup_id: i64,
     pub title: String,
